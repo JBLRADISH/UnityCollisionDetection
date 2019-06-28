@@ -1,0 +1,9 @@
+/Library/*
+/Temp/*
+/Packages/*
+/obj/*
+/.vs/*
+/.idea/*
+*.csproj
+*.sln
+*.user
