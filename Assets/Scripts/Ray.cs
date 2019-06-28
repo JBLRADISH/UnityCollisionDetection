@@ -15,20 +15,11 @@ public class Ray
         this.distance = distance;
     }
 
-    public bool Raycast(Transform transform, RaycastHit hitInfo, bool transformRay = true)
+    public bool Raycast(Transform transform, RaycastHit hitInfo)
     {
-        Vector3 localOrigin;
-        Vector3 localDirection;
-        if (transformRay)
-        {
-            localOrigin = transform.worldToLocalMatrix * MathUtil.Vector4(origin, 1);
-            localDirection = transform.worldToLocalMatrix* direction;
-        }
-        else
-        {
-            localOrigin = origin;
-            localDirection = direction;
-        }
+        Vector3 localOrigin = transform.worldToLocalMatrix * MathUtil.Vector4(origin, 1);
+        Vector3 localDirection = transform.worldToLocalMatrix * direction;
+        localDirection.Normalize();
 
         Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
         float minT = float.MaxValue;
@@ -42,7 +33,7 @@ public class Ray
             Vector3 n = Vector3.Cross(e0, e1);
             float dot = Vector3.Dot(n, localDirection);
             if (dot >= 0)
-            { 
+            {
                 continue;
             }
 
@@ -89,6 +80,12 @@ public class Ray
             hitInfo.point = transform.localToWorldMatrix * MathUtil.Vector4(p, 1);
             return true;
         }
+    }
+
+    //浅拷贝
+    public Ray Clone()
+    {
+        return MemberwiseClone() as Ray;
     }
 }
 

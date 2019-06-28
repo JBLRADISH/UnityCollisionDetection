@@ -125,9 +125,8 @@ public class AABB
         Gizmos.DrawLine(transformMax, transformMax - offset2);
     }
 
-    public bool RayDetection(Ray ray, out RaycastHit hitInfo, bool transformRay = true)
+    public bool AABBRayDetection(Ray ray)
     {
-        hitInfo = new RaycastHit();
         float[] t = new float[3];
         for (int i = 0; i < 3; i++)
         {
@@ -180,6 +179,14 @@ public class AABB
             }
         }
 
-        return ray.Raycast(transform, hitInfo, transformRay);
+        return true;
+    }
+
+    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    {
+        hitInfo = new RaycastHit();
+        if (!AABBRayDetection(ray))
+            return false;
+        return ray.Raycast(transform, hitInfo);
     }
 }

@@ -163,6 +163,10 @@ public class OBB
 						transformRadius[i] = radius[i] * scale[i];
 					}
 				}
+				else
+				{
+					transformRadius = radius;
+				}
 			}
 
 			this.mode = mode;
@@ -202,21 +206,33 @@ public class OBB
 
 	public bool RayDetection(Ray ray, out RaycastHit hitInfo)
 	{
+		hitInfo = new RaycastHit();
 
 		AABB aabb = new AABB(transform, -transformRadius, transformRadius);
-		Matrix4x4 m = Matrix4x4.identity;
+
+		Matrix4x4 t = Matrix4x4.identity;
+		t.SetColumn(3, MathUtil.Vector4(-transformCenter, 1));
+		Matrix4x4 r = Matrix4x4.identity;
+		Matrix4x4 s = Matrix4x4.identity;
 		for (int i = 0; i < 3; i++)
 		{
-			m.SetRow(i, axis[i]);
+			r.SetRow(i, axis[i]);
+			s[i, i] = radius[i] / transformRadius[i];
 		}
 
-		m.SetColumn(3, -transformCenter);
+		Matrix4x4 m = s * r * t;
 
+		Ray aabbRay = ray.Clone();
+		aabbRay.origin = m * MathUtil.Vector4(ray.origin, 1);
+		aabbRay.direction = m * ray.direction;
+		aabbRay.direction.Normalize();
 
-		ray.origin = m * MathUtil.Vector4(ray.origin, 1);
-		ray.direction = m * ray.direction;
+		bool res = aabb.AABBRayDetection(aabbRay);
+		if (res)
+		{
+			return ray.Raycast(transform, hitInfo);
+		}
 
-		bool res = aabb.RayDetection(ray, out hitInfo, false);
 		return res;
 	}
 }
