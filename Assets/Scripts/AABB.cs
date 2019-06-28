@@ -37,6 +37,13 @@ public class AABB
         mode = AABBStructureMode.None;
     }
 
+    public AABB(Transform transform, Vector3 min, Vector3 max)
+    {
+        this.transform = transform;
+        transformMin = min;
+        transformMax = max;
+    }
+
     public void UpdateAABB(AABBStructureMode mode)
     {
         Matrix4x4 m = transform.localToWorldMatrix;
@@ -118,7 +125,7 @@ public class AABB
         Gizmos.DrawLine(transformMax, transformMax - offset2);
     }
 
-    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public bool RayDetection(Ray ray, out RaycastHit hitInfo, bool transformRay = true)
     {
         hitInfo = new RaycastHit();
         float[] t = new float[3];
@@ -173,6 +180,6 @@ public class AABB
             }
         }
 
-        return ray.Raycast(transform, hitInfo);
+        return ray.Raycast(transform, hitInfo, transformRay);
     }
 }

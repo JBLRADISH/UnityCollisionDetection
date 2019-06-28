@@ -199,4 +199,24 @@ public class OBB
 		Gizmos.DrawLine(max, max - offset1);
 		Gizmos.DrawLine(max, max - offset2);
 	}
+
+	public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+	{
+
+		AABB aabb = new AABB(transform, -transformRadius, transformRadius);
+		Matrix4x4 m = Matrix4x4.identity;
+		for (int i = 0; i < 3; i++)
+		{
+			m.SetRow(i, axis[i]);
+		}
+
+		m.SetColumn(3, -transformCenter);
+
+
+		ray.origin = m * MathUtil.Vector4(ray.origin, 1);
+		ray.direction = m * ray.direction;
+
+		bool res = aabb.RayDetection(ray, out hitInfo, false);
+		return res;
+	}
 }

@@ -15,10 +15,21 @@ public class Ray
         this.distance = distance;
     }
 
-    public bool Raycast(Transform transform, RaycastHit hitInfo)
+    public bool Raycast(Transform transform, RaycastHit hitInfo, bool transformRay = true)
     {
-        Vector3 localOrigin = transform.worldToLocalMatrix * MathUtil.Vector4(origin, 1);
-        Vector3 localDirection = transform.worldToLocalMatrix * direction;
+        Vector3 localOrigin;
+        Vector3 localDirection;
+        if (transformRay)
+        {
+            localOrigin = transform.worldToLocalMatrix * MathUtil.Vector4(origin, 1);
+            localDirection = transform.worldToLocalMatrix* direction;
+        }
+        else
+        {
+            localOrigin = origin;
+            localDirection = direction;
+        }
+
         Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
         float minT = float.MaxValue;
         for (int i = 0; i < mesh.triangles.Length; i += 3)

@@ -20,6 +20,20 @@ public class OBBCollider : MonoBehaviour
 	void Update()
 	{
 		obb.UpdateOBB(mode);
+		if (Input.GetMouseButtonDown(0))
+		{
+			Ray ray = camera.ScreenPointToRay();
+			RaycastHit info;
+			if (obb.RayDetection(ray, out info))
+			{
+				GetComponent<Renderer>().material.color = Color.red;
+				Debug.DrawLine(camera.transform.position, info.point, Color.green, 10);
+			}
+			else
+			{
+				GetComponent<Renderer>().material.color = Color.white;
+			}
+		}
 	}
 
 	private void OnDrawGizmos()
