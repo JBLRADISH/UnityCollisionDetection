@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class OBBCollider : MonoBehaviour
 {
+	public OBBStructureMode mode = OBBStructureMode.AABB;
 
 	private OBB obb;
 	private Camera camera;
@@ -11,17 +12,16 @@ public class OBBCollider : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-		obb = new OBB(transform);
+		obb = new OBB(transform, mode);
 		camera = new Camera(UnityEngine.Camera.main);
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
-		obb.UpdateOBB();
+		obb.UpdateOBB(mode);
 	}
-	
-	
+
 	private void OnDrawGizmos()
 	{
 		if (obb != null)

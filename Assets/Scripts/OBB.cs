@@ -9,16 +9,45 @@ public class OBB
 	private Vector3 center;
 	private Vector3[] axis;
 	private Vector3 radius;
+	private Vector3 transformCenter;
+	private Vector3 transformRadius;
 	private Matrix4x4 matrix;
+	private OBBStructureMode mode;
 
-	public OBB(Transform transform)
+	public OBB(Transform transform, OBBStructureMode mode)
 	{
 		this.transform = transform;
-		matrix = transform.localToWorldMatrix;
-		StructureOBB(matrix);
+		this.mode = mode;
+		switch (mode)
+		{
+			case OBBStructureMode.Eigen:
+				matrix = transform.localToWorldMatrix;
+				break;
+			case OBBStructureMode.AABB:
+				matrix = Matrix4x4.identity;
+				break;
+		}
+
+		StructureOBB(mode, matrix);
 	}
 
-	void StructureOBB(Matrix4x4 local2world)
+	void StructureOBB(OBBStructureMode mode, Matrix4x4 local2world)
+	{
+		switch (mode)
+		{
+			case OBBStructureMode.Eigen:
+				EigenOBB(local2world);
+				break;
+			case OBBStructureMode.AABB:
+				AABBOBB();
+				break;
+		}
+
+		transformCenter = center;
+		transformRadius = radius;
+	}
+
+	void EigenOBB(Matrix4x4 local2world)
 	{
 		Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
 		List<Vector3> vertices = Util.GetNoRepeatVertices(mesh);
@@ -65,17 +94,78 @@ public class OBB
 		}
 	}
 
-	public void UpdateOBB()
+	void AABBOBB()
+	{
+		Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
+		Vector3 originMin = mesh.vertices[0];
+		Vector3 originMax = originMin;
+		for (int i = 1; i < mesh.vertices.Length; i++)
+		{
+			for (int j = 0; j < 3; j++)
+			{
+				if (mesh.vertices[i][j] < originMin[j])
+					originMin[j] = mesh.vertices[i][j];
+				if (mesh.vertices[i][j] > originMax[j])
+					originMax[j] = mesh.vertices[i][j];
+			}
+		}
+
+		axis = new Vector3[3];
+		for (int i = 0; i < 3; i++)
+		{
+			Vector3 tmp = Vector3.zero;
+			tmp[i] = 1;
+			axis[i] = tmp;
+		}
+
+		center = (originMax + originMin) * 0.5f;
+
+		radius = (originMax - originMin) * 0.5f;
+
+	}
+
+	public void UpdateOBB(OBBStructureMode mode)
 	{
 		Matrix4x4 m = transform.localToWorldMatrix;
-		if (MathUtil.IsOnlyContainTranslation(matrix, m))
+		if (MathUtil.IsOnlyContainTranslation(matrix, m) && this.mode == mode)
 		{
 			Vector3 translation = MathUtil.GetTranslation(matrix, m);
-			center += translation;
+			transformCenter += translation;
 		}
 		else
 		{
-			StructureOBB(m);
+			if (mode == OBBStructureMode.Eigen)
+			{
+				StructureOBB(mode, m);
+			}
+			else if (mode == OBBStructureMode.AABB)
+			{
+				if (this.mode != mode)
+				{
+					StructureOBB(mode, m);
+				}
+
+				for (int i = 0; i < 3; i++)
+				{
+					Vector3 tmp = Vector3.zero;
+					tmp[i] = 1;
+					axis[i] = m * tmp;
+				}
+
+				transformCenter = m * MathUtil.Vector4(center, 1);
+
+				Vector3 scale;
+				if (MathUtil.IsContainScale(m, out scale))
+				{
+					for (int i = 0; i < 3; i++)
+					{
+						axis[i] /= scale[i];
+						transformRadius[i] = radius[i] * scale[i];
+					}
+				}
+			}
+
+			this.mode = mode;
 		}
 
 		matrix = m;
@@ -84,17 +174,17 @@ public class OBB
 	public void DrawOBB()
 	{
 		Gizmos.color = Color.yellow;
-		Vector3 min = center;
-		Vector3 max = center;
+		Vector3 min = transformCenter;
+		Vector3 max = transformCenter;
 		for (int i = 0; i < 3; i++)
 		{
-			min -= axis[i] * radius[i];
-			max += axis[i] * radius[i];
+			min -= axis[i] * transformRadius[i];
+			max += axis[i] * transformRadius[i];
 		}
 
-		Vector3 offset0 = axis[0] * (radius[0] * 2);
-		Vector3 offset1 = axis[1] * (radius[1] * 2);
-		Vector3 offset2 = axis[2] * (radius[2] * 2);
+		Vector3 offset0 = axis[0] * (transformRadius[0] * 2);
+		Vector3 offset1 = axis[1] * (transformRadius[1] * 2);
+		Vector3 offset2 = axis[2] * (transformRadius[2] * 2);
 		Gizmos.color = Color.yellow;
 		Gizmos.DrawLine(min, min + offset0);
 		Gizmos.DrawLine(min, min + offset1);

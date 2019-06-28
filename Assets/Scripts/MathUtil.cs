@@ -51,6 +51,22 @@ public static class MathUtil
         return ExtractScale(oldMatrix, false) != ExtractScale(newMatrix, false);
     }
 
+    public static bool IsContainScale(Matrix4x4 matrix, out Vector3 scale)
+    {
+        scale = ExtractScale(matrix, false);
+        bool res = scale != Vector3.one;
+        if (res)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                scale[i] = Mathf.Sqrt(scale[i]);
+            }
+        }
+
+        return res;
+    }
+
+
     //计算协方差矩阵
     public static Matrix4x4 GetCovarianceMatrix(List<Vector3> vertices)
     {

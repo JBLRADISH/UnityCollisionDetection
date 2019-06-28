@@ -5,7 +5,7 @@ using UnityEngine;
 public class SphereCollider : MonoBehaviour
 {
 
-	public SphereStructureMode mode = SphereStructureMode.Ritter;
+	public SphereStructureMode mode = SphereStructureMode.RitterIter;
 
 	private Sphere sphere;
 	private Camera camera;

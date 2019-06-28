@@ -15,3 +15,9 @@ public enum SphereStructureMode
     RitterIter,
     RitterEigen
 }
+
+public enum OBBStructureMode
+{
+    Eigen,
+    AABB
+}
