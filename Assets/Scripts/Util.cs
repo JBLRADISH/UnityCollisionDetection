@@ -177,4 +177,9 @@ public static class Util
         return true;
     }
 
+    public static bool TestAABBOBB(AABB aabb, OBB obb)
+    {
+        return TestOBBOBB(aabb.GetOBB(), obb);
+    }
+
 }

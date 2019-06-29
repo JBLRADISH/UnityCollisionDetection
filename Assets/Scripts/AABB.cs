@@ -36,9 +36,8 @@ public class AABB : Box
         mode = AABBStructureMode.None;
     }
 
-    public AABB(Transform transform, Vector3 min, Vector3 max)
+    public AABB(Vector3 min, Vector3 max)
     {
-        this.transform = transform;
         transformMin = min;
         transformMax = max;
     }
@@ -199,6 +198,10 @@ public class AABB : Box
         {
             return Util.TestAABBSphere(this, box as Sphere);
         }
+        else if (box is OBB)
+        {
+            return Util.TestAABBOBB(this, box as OBB);
+        }
 
         return false;
     }
@@ -219,5 +222,11 @@ public class AABB : Box
         }
 
         return point;
+    }
+
+    public OBB GetOBB()
+    {
+        Vector3[] axis = new[] {Vector3.right, Vector3.up, Vector3.forward};
+        return new OBB(axis, (transformMax + transformMin) * 0.5f, (transformMax - transformMin) * 0.5f);
     }
 }

@@ -29,6 +29,18 @@ public class OBB : Box
 		StructureOBB(mode, matrix);
 	}
 
+	public OBB(Vector3[] axis, Vector3 center, Vector3 radius)
+	{
+		this.axis = new Vector3[3];
+		for (int i = 0; i < 3; i++)
+		{
+			this.axis[i] = axis[i];
+		}
+
+		transformCenter = center;
+		transformRadius = radius;
+	}
+
 	void StructureOBB(OBBStructureMode mode, Matrix4x4 local2world)
 	{
 		switch (mode)
@@ -234,6 +246,10 @@ public class OBB : Box
 		{
 			return Util.TestOBBOBB(this, box as OBB);
 		}
+		else if (box is AABB)
+		{
+			return Util.TestAABBOBB(box as AABB, this);
+		}
 
 		return false;
 	}
@@ -257,6 +273,6 @@ public class OBB : Box
 
 	public AABB GetAABB()
 	{
-		return new AABB(transform, -transformRadius, transformRadius);
+		return new AABB(-transformRadius, transformRadius);
 	}
 }
