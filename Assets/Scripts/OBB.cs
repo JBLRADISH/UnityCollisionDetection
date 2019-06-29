@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class OBB
+public class OBB : Box
 {
-
-	private Transform transform;
 	private Vector3 center;
 	private Vector3[] axis;
 	private Vector3 radius;
@@ -204,7 +202,7 @@ public class OBB
 		Gizmos.DrawLine(max, max - offset2);
 	}
 
-	public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+	public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
 	{
 		hitInfo = new RaycastHit();
 
@@ -234,5 +232,10 @@ public class OBB
 		}
 
 		return res;
+	}
+	
+	public override bool BoxDetection(Box box)
+	{
+		return false;
 	}
 }

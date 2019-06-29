@@ -5,13 +5,12 @@ using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 
-public class AABB
+public class AABB : Box
 {
-    private Transform transform;
-    public Vector3 originMin;
-    public Vector3 originMax;
-    private Vector3 transformMin;
-    private Vector3 transformMax;
+    private Vector3 originMin;
+    private Vector3 originMax;
+    public Vector3 transformMin;
+    public Vector3 transformMax;
     private Matrix4x4 matrix;
     private AABBStructureMode mode;
 
@@ -182,11 +181,43 @@ public class AABB
         return true;
     }
 
-    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
     {
         hitInfo = new RaycastHit();
         if (!AABBRayDetection(ray))
             return false;
         return ray.Raycast(transform, hitInfo);
+    }
+
+    public override bool BoxDetection(Box box)
+    {
+        if (box is AABB)
+        {
+            return Util.TestAABBAABB(this, box as AABB);
+        }
+        else if (box is Sphere)
+        {
+            return Util.TestAABBSphere(this, box as Sphere);
+        }
+
+        return false;
+    }
+
+    //找到AABB上离Point最近的一点
+    public Vector3 ClosestPoint(Vector3 point)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (point[i] < transformMin[i])
+            {
+                point[i] = transformMin[i];
+            }
+            else if (point[i] > transformMax[i])
+            {
+                point[i] = transformMax[i];
+            }
+        }
+
+        return point;
     }
 }

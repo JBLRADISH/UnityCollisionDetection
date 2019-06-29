@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.PlayerLoop;
 
-public class Sphere
+public class Sphere : Box
 {
-    private Transform transform;
-    private Vector3 center;
-    private float radius;
+    public Vector3 center;
+    public float radius;
     private Matrix4x4 matrix;
     private SphereStructureMode mode;
 
@@ -186,7 +185,7 @@ public class Sphere
         Gizmos.DrawWireSphere(center, radius);
     }
 
-    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
     {
         hitInfo = new RaycastHit();
 
@@ -211,5 +210,19 @@ public class Sphere
         }
 
         return ray.Raycast(transform, hitInfo);
+    }
+
+    public override bool BoxDetection(Box box)
+    {
+        if (box is Sphere)
+        {
+            return Util.TestSphereSphere(this, box as Sphere);
+        }
+        else if (box is AABB)
+        {
+            return Util.TestAABBSphere(box as AABB, this);
+        }
+
+        return false;
     }
 }

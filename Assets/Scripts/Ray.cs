@@ -87,6 +87,11 @@ public class Ray
     {
         return MemberwiseClone() as Ray;
     }
+
+    public void DrawRay()
+    {
+        Debug.DrawLine(origin, origin + direction * distance, Color.green, 10);
+    }
 }
 
 public class RaycastHit

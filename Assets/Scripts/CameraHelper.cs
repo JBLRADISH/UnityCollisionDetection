@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Camera
+public class CameraHelper
 {
 
-    private UnityEngine.Camera camera;
+    private Camera camera;
 
     public Transform transform;
 
-    public Camera(UnityEngine.Camera camera)
+    public CameraHelper(Camera camera)
     {
         this.camera = camera;
         transform = camera.transform;
