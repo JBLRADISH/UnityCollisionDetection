@@ -5,10 +5,10 @@ using UnityEngine;
 public class OBB : Box
 {
 	private Vector3 center;
-	private Vector3[] axis;
+	public Vector3[] axis;
 	private Vector3 radius;
 	public Vector3 transformCenter;
-	private Vector3 transformRadius;
+	public Vector3 transformRadius;
 	private Matrix4x4 matrix;
 	private OBBStructureMode mode;
 
@@ -229,6 +229,10 @@ public class OBB : Box
 		if (box is Sphere)
 		{
 			return Util.TestOBBSphere(this, box as Sphere);
+		}
+		else if (box is OBB)
+		{
+			return Util.TestOBBOBB(this, box as OBB);
 		}
 
 		return false;
