@@ -7,7 +7,7 @@ public class OBB : Box
 	private Vector3 center;
 	private Vector3[] axis;
 	private Vector3 radius;
-	private Vector3 transformCenter;
+	public Vector3 transformCenter;
 	private Vector3 transformRadius;
 	private Matrix4x4 matrix;
 	private OBBStructureMode mode;
@@ -206,19 +206,9 @@ public class OBB : Box
 	{
 		hitInfo = new RaycastHit();
 
-		AABB aabb = new AABB(transform, -transformRadius, transformRadius);
+		AABB aabb = GetAABB();
 
-		Matrix4x4 t = Matrix4x4.identity;
-		t.SetColumn(3, MathUtil.Vector4(-transformCenter, 1));
-		Matrix4x4 r = Matrix4x4.identity;
-		Matrix4x4 s = Matrix4x4.identity;
-		for (int i = 0; i < 3; i++)
-		{
-			r.SetRow(i, axis[i]);
-			s[i, i] = radius[i] / transformRadius[i];
-		}
-
-		Matrix4x4 m = s * r * t;
+		Matrix4x4 m = RTMatrix;
 
 		Ray aabbRay = ray.Clone();
 		aabbRay.origin = m * MathUtil.Vector4(ray.origin, 1);
@@ -233,9 +223,36 @@ public class OBB : Box
 
 		return res;
 	}
-	
+
 	public override bool BoxDetection(Box box)
 	{
+		if (box is Sphere)
+		{
+			return Util.TestOBBSphere(this, box as Sphere);
+		}
+
 		return false;
+	}
+
+	public Matrix4x4 RTMatrix
+	{
+		get
+		{
+			Matrix4x4 t = Matrix4x4.identity;
+			t.SetColumn(3, MathUtil.Vector4(-transformCenter, 1));
+			Matrix4x4 r = Matrix4x4.identity;
+			for (int i = 0; i < 3; i++)
+			{
+				r.SetRow(i, axis[i]);
+			}
+
+			Matrix4x4 m = r * t;
+			return m;
+		}
+	}
+
+	public AABB GetAABB()
+	{
+		return new AABB(transform, -transformRadius, transformRadius);
 	}
 }

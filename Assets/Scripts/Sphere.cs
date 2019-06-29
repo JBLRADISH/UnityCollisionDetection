@@ -222,6 +222,10 @@ public class Sphere : Box
         {
             return Util.TestAABBSphere(box as AABB, this);
         }
+        else if (box is OBB)
+        {
+            return Util.TestOBBSphere(box as OBB, this);
+        }
 
         return false;
     }

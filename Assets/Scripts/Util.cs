@@ -49,4 +49,11 @@ public static class Util
         return Vector3.Dot(d, d) <= sphere.radius * sphere.radius;
     }
 
+    public static bool TestOBBSphere(OBB obb, Sphere sphere)
+    {
+        sphere = sphere.Clone<Sphere>();
+        sphere.center = obb.RTMatrix * MathUtil.Vector4(sphere.center, 1);
+        return TestAABBSphere(obb.GetAABB(), sphere);
+    }
+
 }
