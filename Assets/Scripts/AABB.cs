@@ -229,4 +229,24 @@ public class AABB : Box
         Vector3[] axis = new[] {Vector3.right, Vector3.up, Vector3.forward};
         return new OBB(axis, (transformMax + transformMin) * 0.5f, (transformMax - transformMin) * 0.5f);
     }
+
+    public override Box Union(Box aabb, bool reference)
+    {
+        AABB aabb1 = reference ? this : Clone<AABB>();
+        AABB aabb2 = aabb as AABB;
+        for (int i = 0; i < 3; i++)
+        {
+            if (aabb2.transformMin[i] < aabb1.transformMin[i])
+            {
+                aabb1.transformMin[i] = aabb2.transformMin[i];
+            }
+
+            if (aabb2.transformMax[i] > aabb1.transformMax[i])
+            {
+                aabb1.transformMax[i] = aabb2.transformMax[i];
+            }
+        }
+
+        return aabb1;
+    }
 }

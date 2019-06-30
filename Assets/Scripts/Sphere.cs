@@ -112,7 +112,7 @@ public class Sphere : Box
     void RitterIterSphere(List<Vector3> vertices, int iter = 8, float shrink = 0.95f)
     {
         RitterSphere(vertices);
-        Sphere sphere = MemberwiseClone() as Sphere;
+        Sphere sphere = Clone<Sphere>();
         for (int i = 0; i < iter; i++)
         {
             sphere.radius *= shrink;
@@ -228,5 +228,30 @@ public class Sphere : Box
         }
 
         return false;
+    }
+
+    public override Box Union(Box sphere, bool reference)
+    {
+        Sphere sphere1 = reference ? this : Clone<Sphere>();
+        Sphere sphere2 = sphere as Sphere;
+        Vector3 d = sphere2.center - sphere1.center;
+        float dist2 = Vector3.Dot(d, d);
+        if ((sphere2.radius - sphere1.radius) * (sphere2.radius - sphere1.radius) >= dist2)
+        {
+            if (sphere2.radius > sphere1.radius)
+            {
+                sphere1.center = sphere2.center;
+                sphere1.radius = sphere2.radius;
+            }
+        }
+        else
+        {
+            float dist = Mathf.Sqrt(dist2);
+            float oldRadius = sphere1.radius;
+            sphere1.radius = (dist + oldRadius + sphere2.radius) * 0.5f;
+            sphere1.center += (sphere1.radius - oldRadius) / dist * d;
+        }
+
+        return sphere1;
     }
 }
