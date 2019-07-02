@@ -5,7 +5,7 @@ using UnityEngine;
 public class BVHAccelerator : MonoBehaviour
 {
 
-	public BVHSplitMethod bvhSplitMethod = BVHSplitMethod.SplitMiddle;
+	public BVHSplitMethod bvhSplitMethod = BVHSplitMethod.SplitSAH;
 
 	private BVH bvh;
 

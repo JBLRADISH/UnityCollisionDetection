@@ -640,7 +640,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f68afd655894ce4ab9f449d567e7a43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  bvhSplitMethod: 1
+  bvhSplitMethod: 2
 --- !u!1 &638147186
 GameObject:
   m_ObjectHideFlags: 0

@@ -23,6 +23,18 @@ public class BVHNode
     }
 }
 
+public class BVHBucket
+{
+    public AABB aabb;
+    public int count;
+
+    public BVHBucket()
+    {
+        aabb = AABB.Default;
+        count = 0;
+    }
+}
+
 //默认构造AABB BVH 
 public class BVH
 {
@@ -56,6 +68,12 @@ public class BVH
 
     BVHNode BuildBVH(AABB[] aabbs, int start, int end)
     {
+        AABB aabb = AABB.Default;
+        for (int i = start; i < end; i++)
+        {
+            aabb.Union(aabbs[i], true);
+        }
+
         if (start == end - 1)
         {
             return new BVHNode(aabbs[start]);
@@ -63,7 +81,7 @@ public class BVH
         else
         {
             BVHNode bvhNode = new BVHNode();
-            AABB centroidAABB = new AABB(Vector3.positiveInfinity, Vector3.negativeInfinity);
+            AABB centroidAABB = AABB.Default;
             for (int i = start; i < end; i++)
             {
                 centroidAABB.Union(aabbs[i].GetCentroid(), true);
@@ -77,6 +95,7 @@ public class BVH
             }
             else
             {
+                //质心中点分割方法
                 if (bvhSplitMethod == BVHSplitMethod.SplitMiddle)
                 {
                     float pivot = centroidAABB.GetCentroid()[dim];
@@ -106,14 +125,104 @@ public class BVH
 
                         left++;
                         right--;
-                    } while (left < right);
+                    } while (left <= right);
 
                     split = left;
                 }
+                //等尺寸集分割方法
                 else if (bvhSplitMethod == BVHSplitMethod.SplitEqualCounts)
                 {
                     split = (start + end) / 2;
                     QuickSelect(aabbs, split, start, end - 1, dim);
+                }
+                //启发式表面积方法
+                else if (bvhSplitMethod == BVHSplitMethod.SplitSAH)
+                {
+                    if (end - start <= 4)
+                    {
+                        split = (start + end) / 2;
+                        QuickSelect(aabbs, split, start, end - 1, dim);
+                    }
+                    else
+                    {
+                        int splitBucket = 12;
+                        BVHBucket[] buckets = new BVHBucket[splitBucket];
+                        for (int i = 0; i < splitBucket; i++)
+                        {
+                            buckets[i] = new BVHBucket();
+                        }
+
+                        for (int i = start; i < end; i++)
+                        {
+                            int bucketNo = GetBucketNo(aabbs[i], centroidAABB, dim, splitBucket);
+                            buckets[bucketNo].count++;
+                            buckets[bucketNo].aabb.Union(aabbs[i], true);
+                        }
+
+                        float[] cost = new float[splitBucket - 1];
+                        for (int i = 0; i < splitBucket - 1; i++)
+                        {
+                            AABB aabb1 = AABB.Default;
+                            AABB aabb2 = AABB.Default;
+                            int count1 = 0;
+                            int count2 = 0;
+                            for (int j = 0; j <= i; j++)
+                            {
+                                aabb1.Union(buckets[j].aabb, true);
+                                count1 += buckets[j].count;
+                            }
+
+                            for (int j = i + 1; j < splitBucket; j++)
+                            {
+                                aabb2.Union(buckets[j].aabb, true);
+                                count2 += buckets[j].count;
+                            }
+
+                            cost[i] = 0.125f + (aabb1.GetSurfaceArea() * count1 + aabb2.GetSurfaceArea() * count2) /
+                                      aabb.GetSurfaceArea();
+                        }
+
+                        float minCost = cost[0];
+                        int pivot = 0;
+                        for (int i = 1; i < splitBucket - 1; i++)
+                        {
+                            if (cost[i] < minCost)
+                            {
+                                minCost = cost[i];
+                                pivot = i;
+                            }
+                        }
+
+                        int left = start;
+                        int right = end - 1;
+                        do
+                        {
+                            while (pivot >= GetBucketNo(aabbs[left], centroidAABB, dim, splitBucket))
+                            {
+                                left++;
+                            }
+
+                            while (pivot < GetBucketNo(aabbs[right], centroidAABB, dim, splitBucket))
+                            {
+                                right--;
+                            }
+
+                            if (left > right)
+                            {
+                                break;
+                            }
+
+                            if (left < right)
+                            {
+                                Swap(aabbs, left, right);
+                            }
+
+                            left++;
+                            right--;
+                        } while (left <= right);
+
+                        split = left;
+                    }
                 }
             }
 
@@ -122,6 +231,19 @@ public class BVH
             bvhNode.aabb = bvhNode.leftChild.aabb.Union(bvhNode.rightChild.aabb, false);
             return bvhNode;
         }
+    }
+
+    int GetBucketNo(AABB aabb, AABB centroidAABB, int dim, int splitBucket)
+    {
+        int bucketNo = (int) ((aabb.GetCentroid()[dim] - centroidAABB.transformMin[dim]) /
+                              (centroidAABB.transformMax[dim] - centroidAABB.transformMin[dim]) *
+                              splitBucket);
+        if (bucketNo == splitBucket)
+        {
+            bucketNo--;
+        }
+
+        return bucketNo;
     }
 
     void QuickSelect(AABB[] aabbs, int k, int left, int right, int dim)
@@ -153,7 +275,7 @@ public class BVH
 
             left++;
             right--;
-        } while (left < right);
+        } while (left <= right);
 
         if (k <= right)
         {

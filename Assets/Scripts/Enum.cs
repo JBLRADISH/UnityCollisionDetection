@@ -25,5 +25,6 @@ public enum OBBStructureMode
 public enum BVHSplitMethod
 {
     SplitMiddle,
-    SplitEqualCounts
+    SplitEqualCounts,
+    SplitSAH
 }

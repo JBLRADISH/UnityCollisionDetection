@@ -14,6 +14,11 @@ public class AABB : Box
     private Matrix4x4 matrix;
     private AABBStructureMode mode;
 
+    public static AABB Default
+    {
+        get { return new AABB(Vector3.positiveInfinity, Vector3.negativeInfinity); }
+    }
+
     public AABB(Transform transform)
     {
         this.transform = transform;
@@ -286,5 +291,11 @@ public class AABB : Box
         }
 
         return idx;
+    }
+
+    public float GetSurfaceArea()
+    {
+        Vector3 d = transformMax - transformMin;
+        return 2 * (d.x * d.y + d.x * d.z + d.y * d.z);
     }
 }
