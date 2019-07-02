@@ -275,11 +275,5 @@ public class OBB : Box
 	{
 		return new AABB(-transformRadius, transformRadius);
 	}
-
-	public override Box Union(Box obb, bool reference)
-	{
-		OBB obb1 = reference ? this : Clone<OBB>();
-		OBB obb2 = obb as OBB;
-		return obb1;
-	}
+	
 }

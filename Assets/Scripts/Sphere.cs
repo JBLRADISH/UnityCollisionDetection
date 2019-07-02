@@ -230,10 +230,10 @@ public class Sphere : Box
         return false;
     }
 
-    public override Box Union(Box sphere, bool reference)
+    public Sphere Union(Sphere sphere, bool reference)
     {
         Sphere sphere1 = reference ? this : Clone<Sphere>();
-        Sphere sphere2 = sphere as Sphere;
+        Sphere sphere2 = sphere;
         Vector3 d = sphere2.center - sphere1.center;
         float dist2 = Vector3.Dot(d, d);
         if ((sphere2.radius - sphere1.radius) * (sphere2.radius - sphere1.radius) >= dist2)
