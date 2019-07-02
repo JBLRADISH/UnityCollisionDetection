@@ -21,3 +21,9 @@ public enum OBBStructureMode
     Eigen,
     AABB
 }
+
+public enum BVHSplitMethod
+{
+    SplitMiddle,
+    SplitEqualCounts
+}

@@ -5,12 +5,14 @@ using UnityEngine;
 public class BVHAccelerator : MonoBehaviour
 {
 
+	public BVHSplitMethod bvhSplitMethod = BVHSplitMethod.SplitMiddle;
+
 	private BVH bvh;
 
 	// Use this for initialization
 	void Start()
 	{
-		bvh = new BVH(null);
+		bvh = new BVH(null, bvhSplitMethod);
 		bvh.CreateBVH();
 	}
 
