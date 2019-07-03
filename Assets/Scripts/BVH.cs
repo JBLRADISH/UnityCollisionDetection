@@ -8,20 +8,27 @@ using UnityEngine.Rendering;
 public class BVHNode
 {
     public AABB aabb;
-    public BVHNode leftChild;
-    public BVHNode rightChild;
+    public BVHNode left;
+    public BVHNode right;
 
     public BVHNode(AABB aabb)
     {
         this.aabb = aabb;
-        leftChild = null;
-        rightChild = null;
+        left = null;
+        right = null;
     }
 
     public BVHNode()
     {
         
     }
+}
+
+public class LinearBVHNode
+{
+    public AABB aabb;
+    public bool left;
+    public int right;
 }
 
 public class BVHBucket
@@ -41,7 +48,7 @@ public class BVH
 {
     private Transform transform;
     private BVHSplitMethod bvhSplitMethod;
-    private BVHNode root;
+    private LinearBVHNode[] bvhNodes;
 
     //transform为null则构建基于场景的粗略测试bvh, 不为null则构建基于对象的精细测试bvh
     public BVH(Transform transform, BVHSplitMethod bvhSplitMethod)
@@ -63,18 +70,81 @@ public class BVH
                 aabbs[i] = aabb;
             }
 
-            root = BuildBVH(aabbs, 0, aabbs.Length);
+            int count = 0;
+            BVHNode root = BuildBVH(aabbs, 0, aabbs.Length, ref count);
+            FlattenBVH(root, count);
         }
     }
 
-    BVHNode BuildBVH(AABB[] aabbs, int start, int end)
+//    void TestBVH2(ref string res)
+//    {
+//        Stack<int> s = new Stack<int>();
+//        s.Push(0);
+//        while (s.Count > 0)
+//        {
+//            int idx = s.Pop();
+//            res += bvhNodes[idx].aabb.GetCentroid() + " ";
+//            if (bvhNodes[idx].right != -1)
+//            {
+//                s.Push(bvhNodes[idx].right);
+//            }
+//
+//            if (bvhNodes[idx].left)
+//            {
+//                s.Push(++idx);
+//            }
+//        }
+//    }
+
+    void FlattenBVH(BVHNode root, int count)
+    {
+        bvhNodes = new LinearBVHNode[count];
+        for (int i = 0; i < count; i++)
+        {
+            bvhNodes[i] = new LinearBVHNode();
+        }
+
+        int offset = 0;
+        BuildFlattenBVH(root, ref offset);
+    }
+
+    void BuildFlattenBVH(BVHNode bvhNode, ref int offset)
+    {
+        LinearBVHNode linearBVHNode = new LinearBVHNode();
+        linearBVHNode.aabb = bvhNode.aabb;
+        bvhNodes[offset] = linearBVHNode;
+        if (bvhNode.left == null && bvhNode.right == null)
+        {
+            offset++;
+            linearBVHNode.left = false;
+            linearBVHNode.right = -1;
+        }
+        else
+        {
+            if (bvhNode.left != null)
+            {
+                linearBVHNode.left = true;
+                offset++;
+                BuildFlattenBVH(bvhNode.left, ref offset);
+                linearBVHNode.right = offset;
+            }
+
+            if (bvhNode.right != null)
+            {
+                BuildFlattenBVH(bvhNode.right, ref offset);
+            }
+        }
+    }
+
+    BVHNode BuildBVH(AABB[] aabbs, int start, int end, ref int count)
     {
         AABB aabb = AABB.Default;
         for (int i = start; i < end; i++)
         {
-            aabb.Union(aabbs[i], true);
+            aabb.Union(aabbs[i]);
         }
 
+        count++;
         if (start == end - 1)
         {
             return new BVHNode(aabbs[start]);
@@ -85,7 +155,7 @@ public class BVH
             AABB centroidAABB = AABB.Default;
             for (int i = start; i < end; i++)
             {
-                centroidAABB.Union(aabbs[i].GetCentroid(), true);
+                centroidAABB.Union(aabbs[i].GetCentroid());
             }
 
             int dim = centroidAABB.MaximumExtent();
@@ -161,7 +231,7 @@ public class BVH
                         {
                             int bucketNo = GetBucketNo(aabbs[i], centroidAABB, dim, splitBucket);
                             buckets[bucketNo].count++;
-                            buckets[bucketNo].aabb.Union(aabbs[i], true);
+                            buckets[bucketNo].aabb.Union(aabbs[i]);
                         }
 
                         float[] cost = new float[splitBucket - 1];
@@ -173,13 +243,13 @@ public class BVH
                             int count2 = 0;
                             for (int j = 0; j <= i; j++)
                             {
-                                aabb1.Union(buckets[j].aabb, true);
+                                aabb1.Union(buckets[j].aabb);
                                 count1 += buckets[j].count;
                             }
 
                             for (int j = i + 1; j < splitBucket; j++)
                             {
-                                aabb2.Union(buckets[j].aabb, true);
+                                aabb2.Union(buckets[j].aabb);
                                 count2 += buckets[j].count;
                             }
 
@@ -245,9 +315,11 @@ public class BVH
                 }
             }
 
-            bvhNode.leftChild = BuildBVH(aabbs, start, split);
-            bvhNode.rightChild = BuildBVH(aabbs, split, end);
-            bvhNode.aabb = bvhNode.leftChild.aabb.Union(bvhNode.rightChild.aabb, false);
+            bvhNode.left = BuildBVH(aabbs, start, split, ref count);
+            bvhNode.right = BuildBVH(aabbs, split, end, ref count);
+            bvhNode.aabb = AABB.Default;
+            bvhNode.aabb.Union(bvhNode.left.aabb);
+            bvhNode.aabb.Union(bvhNode.right.aabb);
             return bvhNode;
         }
     }
@@ -336,18 +408,9 @@ public class BVH
 
     public void DrawBVH()
     {
-        DrawBVH(root);
-    }
-
-    void DrawBVH(BVHNode bvhNode)
-    {
-        if (bvhNode == null)
+        for (int i = 0; i < bvhNodes.Length; i++)
         {
-            return;
+            bvhNodes[i].aabb.DrawAABB();
         }
-
-        bvhNode.aabb.DrawAABB();
-        DrawBVH(bvhNode.leftChild);
-        DrawBVH(bvhNode.rightChild);
     }
 }

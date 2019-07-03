@@ -235,43 +235,40 @@ public class AABB : Box
         return new OBB(axis, (transformMax + transformMin) * 0.5f, (transformMax - transformMin) * 0.5f);
     }
 
-    public AABB Union(AABB aabb, bool reference)
+    public AABB Union(AABB aabb)
     {
-        AABB aabb1 = reference ? this : Clone<AABB>();
-        AABB aabb2 = aabb;
         for (int i = 0; i < 3; i++)
         {
-            if (aabb2.transformMin[i] < aabb1.transformMin[i])
+            if (aabb.transformMin[i] < transformMin[i])
             {
-                aabb1.transformMin[i] = aabb2.transformMin[i];
+                transformMin[i] = aabb.transformMin[i];
             }
 
-            if (aabb2.transformMax[i] > aabb1.transformMax[i])
+            if (aabb.transformMax[i] > transformMax[i])
             {
-                aabb1.transformMax[i] = aabb2.transformMax[i];
+                transformMax[i] = aabb.transformMax[i];
             }
         }
 
-        return aabb1;
+        return this;
     }
 
-    public AABB Union(Vector3 point, bool reference)
+    public AABB Union(Vector3 point)
     {
-        AABB aabb = reference ? this : Clone<AABB>();
         for (int i = 0; i < 3; i++)
         {
-            if (point[i] < aabb.transformMin[i])
+            if (point[i] < transformMin[i])
             {
-                aabb.transformMin[i] = point[i];
+                transformMin[i] = point[i];
             }
 
-            if (point[i] > aabb.transformMax[i])
+            if (point[i] > transformMax[i])
             {
-                aabb.transformMax[i] = point[i];
+                transformMax[i] = point[i];
             }
         }
 
-        return aabb;
+        return this;
     }
 
     public Vector3 GetCentroid()
