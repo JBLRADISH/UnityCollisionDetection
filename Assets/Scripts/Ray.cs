@@ -97,4 +97,5 @@ public class Ray
 public class RaycastHit
 {
     public Vector3 point;
+    public Transform transform;
 }

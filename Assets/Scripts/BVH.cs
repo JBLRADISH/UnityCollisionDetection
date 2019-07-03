@@ -10,12 +10,14 @@ public class BVHNode
     public AABB aabb;
     public BVHNode left;
     public BVHNode right;
+    public int axis;
 
     public BVHNode(AABB aabb)
     {
         this.aabb = aabb;
         left = null;
         right = null;
+        axis = -1;
     }
 
     public BVHNode()
@@ -29,6 +31,7 @@ public class LinearBVHNode
     public AABB aabb;
     public bool left;
     public int right;
+    public int axis;
 }
 
 public class BVHBucket
@@ -76,26 +79,7 @@ public class BVH
         }
     }
 
-//    void TestBVH2(ref string res)
-//    {
-//        Stack<int> s = new Stack<int>();
-//        s.Push(0);
-//        while (s.Count > 0)
-//        {
-//            int idx = s.Pop();
-//            res += bvhNodes[idx].aabb.GetCentroid() + " ";
-//            if (bvhNodes[idx].right != -1)
-//            {
-//                s.Push(bvhNodes[idx].right);
-//            }
-//
-//            if (bvhNodes[idx].left)
-//            {
-//                s.Push(++idx);
-//            }
-//        }
-//    }
-
+    //顺序存储BVH
     void FlattenBVH(BVHNode root, int count)
     {
         bvhNodes = new LinearBVHNode[count];
@@ -112,6 +96,7 @@ public class BVH
     {
         LinearBVHNode linearBVHNode = new LinearBVHNode();
         linearBVHNode.aabb = bvhNode.aabb;
+        linearBVHNode.axis = bvhNode.axis;
         bvhNodes[offset] = linearBVHNode;
         if (bvhNode.left == null && bvhNode.right == null)
         {
@@ -320,6 +305,7 @@ public class BVH
             bvhNode.aabb = AABB.Default;
             bvhNode.aabb.Union(bvhNode.left.aabb);
             bvhNode.aabb.Union(bvhNode.right.aabb);
+            bvhNode.axis = dim;
             return bvhNode;
         }
     }
@@ -412,5 +398,53 @@ public class BVH
         {
             bvhNodes[i].aabb.DrawAABB();
         }
+    }
+
+    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    {
+        hitInfo = new RaycastHit();
+        bool[] dirIsNeg = new bool[3] {ray.direction.x < 0, ray.direction.y < 0, ray.direction.z < 0};
+        Stack<int> s = new Stack<int>();
+        s.Push(0);
+        while (s.Count > 0)
+        {
+            int idx = s.Pop();
+            LinearBVHNode linearBVHNode = bvhNodes[idx];
+            if (linearBVHNode.aabb.AABBRayDetection(ray))
+            {
+                if (!linearBVHNode.left && linearBVHNode.right == -1)
+                {
+                    hitInfo.transform = linearBVHNode.aabb.transform;
+                    return ray.Raycast(hitInfo.transform, hitInfo);
+                }
+
+                if (dirIsNeg[linearBVHNode.axis])
+                {
+                    if (linearBVHNode.left)
+                    {
+                        s.Push(++idx);
+                    }
+
+                    if (linearBVHNode.right != -1)
+                    {
+                        s.Push(linearBVHNode.right);
+                    }
+                }
+                else
+                {
+                    if (linearBVHNode.right != -1)
+                    {
+                        s.Push(linearBVHNode.right);
+                    }
+
+                    if (linearBVHNode.left)
+                    {
+                        s.Push(++idx);
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
