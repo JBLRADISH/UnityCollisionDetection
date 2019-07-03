@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 public class BVHNode
@@ -89,6 +90,7 @@ public class BVH
 
             int dim = centroidAABB.MaximumExtent();
             int split = 0;
+            float splitCentroid = 0;
             if (Mathf.Abs(centroidAABB.transformMax[dim] - centroidAABB.transformMin[dim]) <= float.Epsilon)
             {
                 split = (start + end) / 2;
@@ -128,12 +130,14 @@ public class BVH
                     } while (left <= right);
 
                     split = left;
+                    splitCentroid = pivot;
                 }
                 //等尺寸集分割方法
                 else if (bvhSplitMethod == BVHSplitMethod.SplitEqualCounts)
                 {
                     split = (start + end) / 2;
                     QuickSelect(aabbs, split, start, end - 1, dim);
+                    splitCentroid = aabbs[split].GetCentroid()[dim];
                 }
                 //启发式表面积方法
                 else if (bvhSplitMethod == BVHSplitMethod.SplitSAH)
@@ -142,6 +146,7 @@ public class BVH
                     {
                         split = (start + end) / 2;
                         QuickSelect(aabbs, split, start, end - 1, dim);
+                        splitCentroid = aabbs[split].GetCentroid()[dim];
                     }
                     else
                     {
@@ -222,7 +227,21 @@ public class BVH
                         } while (left <= right);
 
                         split = left;
+
+                        splitCentroid = centroidAABB.transformMin[dim] + (pivot + 1.0f) / splitBucket *
+                                        (centroidAABB.transformMax[dim] - centroidAABB.transformMin[dim]);
                     }
+                }
+
+                //断言检验
+                for (int i = start; i < split; i++)
+                {
+                    Assert.IsTrue(aabbs[i].GetCentroid()[dim] <= splitCentroid);
+                }
+
+                for (int i = split; i < end; i++)
+                {
+                    Assert.IsTrue(aabbs[i].GetCentroid()[dim] >= splitCentroid);
                 }
             }
 
