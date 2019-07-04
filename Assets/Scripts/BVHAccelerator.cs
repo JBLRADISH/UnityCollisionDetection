@@ -13,7 +13,7 @@ public class BVHAccelerator : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-		bvh = new BVH(null, bvhSplitMethod);
+		bvh = new BVH(null, bvhSplitMethod, 1);
 		bvh.CreateBVH();
 		cameraHelper = new CameraHelper(Camera.main);
 	}

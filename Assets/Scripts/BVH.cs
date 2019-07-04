@@ -11,19 +11,7 @@ public class BVHNode
     public BVHNode left;
     public BVHNode right;
     public int axis;
-
-    public BVHNode(AABB aabb)
-    {
-        this.aabb = aabb;
-        left = null;
-        right = null;
-        axis = -1;
-    }
-
-    public BVHNode()
-    {
-        
-    }
+    public int[] triangles;
 }
 
 public class LinearBVHNode
@@ -32,6 +20,7 @@ public class LinearBVHNode
     public bool left;
     public int right;
     public int axis;
+    public int[] triangles;
 }
 
 public class BVHBucket
@@ -51,13 +40,15 @@ public class BVH
 {
     private Transform transform;
     private BVHSplitMethod bvhSplitMethod;
+    private int maxPrimsInNode;
     private LinearBVHNode[] bvhNodes;
 
     //transform为null则构建基于场景的粗略测试bvh, 不为null则构建基于对象的精细测试bvh
-    public BVH(Transform transform, BVHSplitMethod bvhSplitMethod)
+    public BVH(Transform transform, BVHSplitMethod bvhSplitMethod, int maxPrimsInNode)
     {
         this.transform = transform;
         this.bvhSplitMethod = bvhSplitMethod;
+        this.maxPrimsInNode = maxPrimsInNode;
     }
 
     public void CreateBVH()
@@ -69,7 +60,25 @@ public class BVH
             for (int i = 0; i < meshFilters.Length; i++)
             {
                 AABB aabb = new AABB(meshFilters[i].transform);
-                aabb.UpdateAABB(AABBStructureMode.Compact);
+                aabb.UpdateAABB(AABBStructureMode.Compact, meshFilters[i].transform.localToWorldMatrix);
+                aabbs[i] = aabb;
+            }
+
+            int count = 0;
+            BVHNode root = BuildBVH(aabbs, 0, aabbs.Length, ref count);
+            FlattenBVH(root, count);
+        }
+        else
+        {
+            Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
+            AABB[] aabbs = new AABB[mesh.triangles.Length / 3];
+            for (int i = 0; i < aabbs.Length; i++)
+            {
+                AABB aabb = AABB.Default;
+                aabb.triangle = i;
+                aabb.Union(mesh.vertices[mesh.triangles[i * 3]]);
+                aabb.Union(mesh.vertices[mesh.triangles[i * 3 + 1]]);
+                aabb.Union(mesh.vertices[mesh.triangles[i * 3 + 2]]);
                 aabbs[i] = aabb;
             }
 
@@ -97,6 +106,15 @@ public class BVH
         LinearBVHNode linearBVHNode = new LinearBVHNode();
         linearBVHNode.aabb = bvhNode.aabb;
         linearBVHNode.axis = bvhNode.axis;
+        if (bvhNode.triangles != null)
+        {
+            linearBVHNode.triangles = new int[bvhNode.triangles.Length];
+            for (int i = 0; i < linearBVHNode.triangles.Length; i++)
+            {
+                linearBVHNode.triangles[i] = bvhNode.triangles[i];
+            }
+        }
+
         bvhNodes[offset] = linearBVHNode;
         if (bvhNode.left == null && bvhNode.right == null)
         {
@@ -130,13 +148,14 @@ public class BVH
         }
 
         count++;
+        BVHNode bvhNode = new BVHNode();
         if (start == end - 1)
         {
-            return new BVHNode(aabbs[start]);
+            bvhNode.aabb = aabbs[start];
+            bvhNode.triangles = new[] {bvhNode.aabb.triangle};
         }
         else
         {
-            BVHNode bvhNode = new BVHNode();
             AABB centroidAABB = AABB.Default;
             for (int i = start; i < end; i++)
             {
@@ -148,6 +167,18 @@ public class BVH
             float splitCentroid = 0;
             if (Mathf.Abs(centroidAABB.transformMax[dim] - centroidAABB.transformMin[dim]) <= float.Epsilon)
             {
+                if (end - start <= maxPrimsInNode)
+                {
+                    bvhNode.aabb = aabb;
+                    bvhNode.triangles = new int[end - start];
+                    for (int i = start; i < end; i++)
+                    {
+                        bvhNode.triangles[i - start] = aabbs[i].triangle;
+                    }
+
+                    return bvhNode;
+                }
+
                 split = (start + end) / 2;
             }
             else
@@ -281,6 +312,18 @@ public class BVH
                             right--;
                         } while (left <= right);
 
+                        if (end - start <= maxPrimsInNode && minCost >= maxPrimsInNode)
+                        {
+                            bvhNode.aabb = aabb;
+                            bvhNode.triangles = new int[end - start];
+                            for (int i = start; i < end; i++)
+                            {
+                                bvhNode.triangles[i - start] = aabbs[i].triangle;
+                            }
+
+                            return bvhNode;
+                        }
+
                         split = left;
 
                         splitCentroid = centroidAABB.transformMin[dim] + (pivot + 1.0f) / splitBucket *
@@ -306,8 +349,9 @@ public class BVH
             bvhNode.aabb.Union(bvhNode.left.aabb);
             bvhNode.aabb.Union(bvhNode.right.aabb);
             bvhNode.axis = dim;
-            return bvhNode;
         }
+
+        return bvhNode;
     }
 
     int GetBucketNo(AABB aabb, AABB centroidAABB, int dim, int splitBucket)
@@ -394,9 +438,20 @@ public class BVH
 
     public void DrawBVH()
     {
-        for (int i = 0; i < bvhNodes.Length; i++)
+        if (transform == null)
         {
-            bvhNodes[i].aabb.DrawAABB();
+            for (int i = 0; i < bvhNodes.Length; i++)
+            {
+                bvhNodes[i].aabb.DrawAABB();
+            }
+        }
+        else
+        {
+            for (int i = 0; i < bvhNodes.Length; i++)
+            {
+                //bvhNodes[i].aabb.UpdateAABB(AABBStructureMode.Compact, transform.localToWorldMatrix);
+                bvhNodes[i].aabb.DrawAABB();
+            }
         }
     }
 

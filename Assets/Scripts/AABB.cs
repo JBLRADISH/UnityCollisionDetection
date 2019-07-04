@@ -13,6 +13,7 @@ public class AABB : Box
     public Vector3 transformMax;
     private Matrix4x4 matrix;
     private AABBStructureMode mode;
+    public int triangle;
 
     public static AABB Default
     {
@@ -47,9 +48,9 @@ public class AABB : Box
         transformMax = max;
     }
 
-    public void UpdateAABB(AABBStructureMode mode)
+    public void UpdateAABB(AABBStructureMode mode, Matrix4x4 localToWorldMatrix)
     {
-        Matrix4x4 m = transform.localToWorldMatrix;
+        Matrix4x4 m = localToWorldMatrix;
         //只发生平移的话不需要重新计算包围盒，直接加上偏移量即可
         if (MathUtil.IsOnlyContainTranslation(matrix, m) && this.mode == mode)
         {

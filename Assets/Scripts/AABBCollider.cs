@@ -20,7 +20,7 @@ public class AABBCollider : BoxCollider
 	// Update is called once per frame
 	void Update()
 	{
-		aabb.UpdateAABB(mode);
+		aabb.UpdateAABB(mode, transform.localToWorldMatrix);
 	}
 
 	void OnDrawGizmos()
