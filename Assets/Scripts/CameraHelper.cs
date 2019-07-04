@@ -25,7 +25,7 @@ public class CameraHelper
         //注意观察空间和世界空间的Z轴是反向的，所以z值要取反
         Vector4 p = new Vector4(x * uv.x, y * uv.y, -camera.nearClipPlane, 1);
         Vector3 wp = camera.cameraToWorldMatrix * p;
-        Ray ray = new Ray(camera.transform.position, (wp - camera.transform.position), 100);
+        Ray ray = new Ray(camera.transform.position, (wp - camera.transform.position), 1000);
         return ray;
     }
 }

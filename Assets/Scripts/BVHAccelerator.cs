@@ -32,7 +32,7 @@ public class BVHAccelerator : MonoBehaviour
 		}
 	}
 
-	void OnDrawGizmos()
+	void OnDrawGizmosSelected()
 	{
 		if (bvh != null)
 		{

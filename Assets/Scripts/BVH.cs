@@ -36,9 +36,8 @@ public class BVHBucket
 }
 
 //默认构造AABB BVH 
-public class BVH
+public class BVH : Box
 {
-    private Transform transform;
     private BVHSplitMethod bvhSplitMethod;
     private int maxPrimsInNode;
     private LinearBVHNode[] bvhNodes;
@@ -55,12 +54,11 @@ public class BVH
     {
         if (transform == null)
         {
-            MeshFilter[] meshFilters = GameObject.FindObjectsOfType<MeshFilter>();
-            AABB[] aabbs = new AABB[meshFilters.Length];
-            for (int i = 0; i < meshFilters.Length; i++)
+            BoxCollider[] boxColliders = GameObject.FindObjectsOfType<BoxCollider>();
+            AABB[] aabbs = new AABB[boxColliders.Length];
+            for (int i = 0; i < boxColliders.Length; i++)
             {
-                AABB aabb = new AABB(meshFilters[i].transform);
-                aabb.UpdateAABB(AABBStructureMode.Compact, meshFilters[i].transform.localToWorldMatrix);
+                AABB aabb = boxColliders[i].box.OuterAABB();
                 aabbs[i] = aabb;
             }
 
@@ -438,13 +436,25 @@ public class BVH
 
     public void DrawBVH()
     {
-        for (int i = 0; i < bvhNodes.Length; i++)
+        if (transform == null)
         {
-            bvhNodes[i].aabb.DrawAABB();
+            for (int i = 0; i < bvhNodes.Length; i++)
+            {
+                bvhNodes[i].aabb.DrawAABB();
+            }
+        }
+        else
+        {
+            for (int i = 0; i < bvhNodes.Length; i++)
+            {
+                OBB obb = bvhNodes[i].aabb.GetOBB();
+                obb.UpdateOBB(transform.localToWorldMatrix);
+                obb.DrawOBB();
+            }
         }
     }
 
-    public bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
     {
         hitInfo = new RaycastHit();
         if (transform != null)
@@ -461,7 +471,7 @@ public class BVH
         {
             int idx = s.Pop();
             LinearBVHNode linearBVHNode = bvhNodes[idx];
-            if (linearBVHNode.aabb.AABBRayDetection(ray))
+            if (linearBVHNode.aabb.RayDetection(ray, out hitInfo))
             {
                 if (!linearBVHNode.left && linearBVHNode.right == -1)
                 {
@@ -493,7 +503,7 @@ public class BVH
                     else
                     {
                         hitInfo.transform = linearBVHNode.aabb.transform;
-                        return ray.Raycast(hitInfo.transform, hitInfo);
+                        return hitInfo.transform.GetComponent<BoxCollider>().box.RayDetection(ray, out hitInfo);
                     }
                 }
 
@@ -525,5 +535,15 @@ public class BVH
         }
 
         return false;
+    }
+
+    public override bool BoxDetection(Box box)
+    {
+        return false;
+    }
+
+    public override AABB OuterAABB()
+    {
+        return new AABB(transform);
     }
 }

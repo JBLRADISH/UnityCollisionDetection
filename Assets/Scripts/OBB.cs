@@ -37,6 +37,8 @@ public class OBB : Box
 			this.axis[i] = axis[i];
 		}
 
+		this.center = center;
+		this.radius = radius;
 		transformCenter = center;
 		transformRadius = radius;
 	}
@@ -155,34 +157,39 @@ public class OBB : Box
 					StructureOBB(mode, m);
 				}
 
-				for (int i = 0; i < 3; i++)
-				{
-					Vector3 tmp = Vector3.zero;
-					tmp[i] = 1;
-					axis[i] = m * tmp;
-				}
-
-				transformCenter = m * MathUtil.Vector4(center, 1);
-
-				Vector3 scale;
-				if (MathUtil.IsContainScale(m, out scale))
-				{
-					for (int i = 0; i < 3; i++)
-					{
-						axis[i] /= scale[i];
-						transformRadius[i] = radius[i] * scale[i];
-					}
-				}
-				else
-				{
-					transformRadius = radius;
-				}
+				UpdateOBB(m);
 			}
 
 			this.mode = mode;
 		}
 
 		matrix = m;
+	}
+
+	public void UpdateOBB(Matrix4x4 m)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			Vector3 tmp = Vector3.zero;
+			tmp[i] = 1;
+			axis[i] = m * tmp;
+		}
+
+		transformCenter = m * MathUtil.Vector4(center, 1);
+
+		Vector3 scale;
+		if (MathUtil.IsContainScale(m, out scale))
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				axis[i] /= scale[i];
+				transformRadius[i] = radius[i] * scale[i];
+			}
+		}
+		else
+		{
+			transformRadius = radius;
+		}
 	}
 
 	public void DrawOBB()
@@ -216,21 +223,18 @@ public class OBB : Box
 
 	public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
 	{
-		hitInfo = new RaycastHit();
-
 		AABB aabb = GetAABB();
 
 		Matrix4x4 m = RTMatrix;
 
-		Ray aabbRay = ray.Clone();
-		aabbRay.origin = m * MathUtil.Vector4(ray.origin, 1);
-		aabbRay.direction = m * ray.direction;
-		aabbRay.direction.Normalize();
+		ray.origin = m * MathUtil.Vector4(ray.origin, 1);
+		ray.direction = m * ray.direction;
+		ray.direction.Normalize();
 
-		bool res = aabb.AABBRayDetection(aabbRay);
+		bool res = aabb.RayDetection(ray, out hitInfo);
 		if (res)
 		{
-			return ray.Raycast(transform, hitInfo);
+			hitInfo.point = TRMatrix * MathUtil.Vector4(hitInfo.point, 1);
 		}
 
 		return res;
@@ -271,9 +275,37 @@ public class OBB : Box
 		}
 	}
 
+	public Matrix4x4 TRMatrix
+	{
+		get
+		{
+			Matrix4x4 t = Matrix4x4.identity;
+			t.SetColumn(3, MathUtil.Vector4(transformCenter, 1));
+			Matrix4x4 r = Matrix4x4.identity;
+			for (int i = 0; i < 3; i++)
+			{
+				r.SetColumn(i, axis[i]);
+			}
+
+			Matrix4x4 m = t * r;
+			return m;
+		}
+	}
+
 	public AABB GetAABB()
 	{
 		return new AABB(-transformRadius, transformRadius);
 	}
-	
+
+	public override AABB OuterAABB()
+	{
+		AABB aabb = AABB.Default;
+		aabb.Union(transformCenter + axis[0] * transformRadius[0] + axis[1] * transformRadius[1] +
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter - axis[0] * transformRadius[0] - axis[1] * transformRadius[1] -
+		           axis[2] * transformRadius[2]);
+		aabb.transform = transform;
+		return aabb;
+	}
+
 }

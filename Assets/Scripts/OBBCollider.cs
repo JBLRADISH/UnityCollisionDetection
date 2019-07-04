@@ -9,7 +9,7 @@ public class OBBCollider : BoxCollider
 	private OBB obb;
 
 	// Use this for initialization
-	void Start()
+	void Awake()
 	{
 		obb = new OBB(transform, mode);
 		box = obb;
@@ -21,7 +21,7 @@ public class OBBCollider : BoxCollider
 		obb.UpdateOBB(mode);
 	}
 
-	void OnDrawGizmos()
+	void OnDrawGizmosSelected()
 	{
 		if (obb != null)
 		{

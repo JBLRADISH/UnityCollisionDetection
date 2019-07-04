@@ -27,7 +27,6 @@ public class Test : MonoBehaviour
 	void TestRayDetection()
 	{
 		Ray ray = cameraHelper.ScreenPointToRay();
-		//ray.DrawRay();
 		RaycastHit info;
 		BoxCollider[] boxColliders = GameObject.FindObjectsOfType<BoxCollider>();
 		for (int i = 0; i < boxColliders.Length; i++)

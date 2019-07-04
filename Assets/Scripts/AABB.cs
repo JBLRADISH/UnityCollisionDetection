@@ -40,6 +40,7 @@ public class AABB : Box
         transformMax = originMax;
         matrix = Matrix4x4.identity;
         mode = AABBStructureMode.None;
+        UpdateAABB(AABBStructureMode.Compact);
     }
 
     public AABB(Vector3 min, Vector3 max)
@@ -48,9 +49,9 @@ public class AABB : Box
         transformMax = max;
     }
 
-    public void UpdateAABB(AABBStructureMode mode, Matrix4x4 localToWorldMatrix)
+    public void UpdateAABB(AABBStructureMode mode)
     {
-        Matrix4x4 m = localToWorldMatrix;
+        Matrix4x4 m = transform.localToWorldMatrix;
         //只发生平移的话不需要重新计算包围盒，直接加上偏移量即可
         if (MathUtil.IsOnlyContainTranslation(matrix, m) && this.mode == mode)
         {
@@ -129,8 +130,9 @@ public class AABB : Box
         Gizmos.DrawLine(transformMax, transformMax - offset2);
     }
 
-    public bool AABBRayDetection(Ray ray)
+    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
     {
+        hitInfo = new RaycastHit();
         float[] t = new float[3];
         for (int i = 0; i < 3; i++)
         {
@@ -183,15 +185,8 @@ public class AABB : Box
             }
         }
 
+        hitInfo.point = ray.origin + ray.direction * t[idx];
         return true;
-    }
-
-    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
-    {
-        hitInfo = new RaycastHit();
-        if (!AABBRayDetection(ray))
-            return false;
-        return ray.Raycast(transform, hitInfo);
     }
 
     public override bool BoxDetection(Box box)
@@ -295,5 +290,10 @@ public class AABB : Box
     {
         Vector3 d = transformMax - transformMin;
         return 2 * (d.x * d.y + d.x * d.z + d.y * d.z);
+    }
+
+    public override AABB OuterAABB()
+    {
+        return Clone<AABB>();
     }
 }

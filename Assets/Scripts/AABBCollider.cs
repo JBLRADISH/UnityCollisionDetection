@@ -6,12 +6,12 @@ using UnityEngine;
 
 public class AABBCollider : BoxCollider
 {
-	public AABBStructureMode mode = AABBStructureMode.Accelerate;
+	public AABBStructureMode mode = AABBStructureMode.Compact;
 
 	private AABB aabb;
 
 	// Use this for initialization
-	void Start()
+	void Awake()
 	{
 		aabb = new AABB(transform);
 		box = aabb;
@@ -20,10 +20,10 @@ public class AABBCollider : BoxCollider
 	// Update is called once per frame
 	void Update()
 	{
-		aabb.UpdateAABB(mode, transform.localToWorldMatrix);
+		aabb.UpdateAABB(mode);
 	}
 
-	void OnDrawGizmos()
+	void OnDrawGizmosSelected()
 	{
 		if (aabb != null)
 		{

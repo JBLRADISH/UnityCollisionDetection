@@ -10,7 +10,7 @@ public class SphereCollider : BoxCollider
 	private Sphere sphere;
 
 	// Use this for initialization
-	void Start()
+	void Awake()
 	{
 		sphere = new Sphere(transform, mode);
 		box = sphere;
@@ -22,7 +22,7 @@ public class SphereCollider : BoxCollider
 		sphere.UpdateSphere(mode);
 	}
 	
-	void OnDrawGizmos()
+	void OnDrawGizmosSelected()
 	{
 		if (sphere != null)
 		{

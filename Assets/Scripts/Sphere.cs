@@ -209,7 +209,8 @@ public class Sphere : Box
             return false;
         }
 
-        return ray.Raycast(transform, hitInfo);
+        hitInfo.point = ray.origin + ray.direction * t;
+        return true;
     }
 
     public override bool BoxDetection(Box box)
@@ -230,28 +231,33 @@ public class Sphere : Box
         return false;
     }
 
-    public Sphere Union(Sphere sphere, bool reference)
+    public Sphere Union(Sphere sphere)
     {
-        Sphere sphere1 = reference ? this : Clone<Sphere>();
-        Sphere sphere2 = sphere;
-        Vector3 d = sphere2.center - sphere1.center;
+        Vector3 d = sphere.center - center;
         float dist2 = Vector3.Dot(d, d);
-        if ((sphere2.radius - sphere1.radius) * (sphere2.radius - sphere1.radius) >= dist2)
+        if ((sphere.radius - radius) * (sphere.radius - radius) >= dist2)
         {
-            if (sphere2.radius > sphere1.radius)
+            if (sphere.radius > radius)
             {
-                sphere1.center = sphere2.center;
-                sphere1.radius = sphere2.radius;
+                center = sphere.center;
+                radius = sphere.radius;
             }
         }
         else
         {
             float dist = Mathf.Sqrt(dist2);
-            float oldRadius = sphere1.radius;
-            sphere1.radius = (dist + oldRadius + sphere2.radius) * 0.5f;
-            sphere1.center += (sphere1.radius - oldRadius) / dist * d;
+            float oldRadius = radius;
+            radius = (dist + oldRadius + sphere.radius) * 0.5f;
+            center += (radius - oldRadius) / dist * d;
         }
 
-        return sphere1;
+        return this;
+    }
+
+    public override AABB OuterAABB()
+    {
+        AABB aabb = new AABB(center - Vector3.one * radius, center + Vector3.one * radius);
+        aabb.transform = transform;
+        return aabb;
     }
 }
