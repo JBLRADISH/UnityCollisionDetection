@@ -82,6 +82,64 @@ public class Ray
         }
     }
 
+    public bool Raycast(Vector3 p0, Vector3 p1, Vector3 p2, ref float t)
+    {
+        Vector3 e0 = p0 - p1;
+        Vector3 e1 = p1 - p2;
+        Vector3 n = Vector3.Cross(e0, e1);
+        float dot = Vector3.Dot(n, direction);
+        if (dot >= 0)
+        {
+            return false;
+        }
+
+        float d = Vector3.Dot(n, p0);
+        t = (d - Vector3.Dot(origin, n)) / dot;
+        if (t < 0 || t > distance)
+        {
+            return false;
+        }
+
+        Vector3 p = origin + direction * t;
+        Vector3 e2 = p2 - p0;
+        Vector3 d0 = p0 - p;
+        Vector3 d2 = p2 - p;
+        float inverseNN = 1 / Vector3.Dot(n, n);
+        float b0 = Vector3.Dot(Vector3.Cross(e1, d2), n) * inverseNN;
+        if (b0 < 0 || b0 > 1)
+        {
+            return false;
+        }
+
+        float b1 = Vector3.Dot(Vector3.Cross(e2, d0), n) * inverseNN;
+        if (b1 < 0 || b1 > 1)
+        {
+            return false;
+        }
+
+        float b2 = 1 - b0 - b1;
+        if (b2 < 0 || b2 > 1)
+        {
+            return false;
+        }
+
+        if (t > distance)
+        {
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    public void Transform(Matrix4x4 m)
+    {
+        origin = m * MathUtil.Vector4(origin, 1);
+        direction = m * direction;
+        direction.Normalize();
+    }
+
     //浅拷贝
     public Ray Clone()
     {

@@ -438,26 +438,22 @@ public class BVH
 
     public void DrawBVH()
     {
-        if (transform == null)
+        for (int i = 0; i < bvhNodes.Length; i++)
         {
-            for (int i = 0; i < bvhNodes.Length; i++)
-            {
-                bvhNodes[i].aabb.DrawAABB();
-            }
-        }
-        else
-        {
-            for (int i = 0; i < bvhNodes.Length; i++)
-            {
-                //bvhNodes[i].aabb.UpdateAABB(AABBStructureMode.Compact, transform.localToWorldMatrix);
-                bvhNodes[i].aabb.DrawAABB();
-            }
+            bvhNodes[i].aabb.DrawAABB();
         }
     }
 
     public bool RayDetection(Ray ray, out RaycastHit hitInfo)
     {
         hitInfo = new RaycastHit();
+        if (transform != null)
+        {
+            ray.Transform(transform.worldToLocalMatrix);
+        }
+
+        Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
+
         bool[] dirIsNeg = new bool[3] {ray.direction.x < 0, ray.direction.y < 0, ray.direction.z < 0};
         Stack<int> s = new Stack<int>();
         s.Push(0);
@@ -469,8 +465,36 @@ public class BVH
             {
                 if (!linearBVHNode.left && linearBVHNode.right == -1)
                 {
-                    hitInfo.transform = linearBVHNode.aabb.transform;
-                    return ray.Raycast(hitInfo.transform, hitInfo);
+                    if (transform != null)
+                    {
+                        bool hit = false;
+                        float mint = float.MaxValue;
+                        for (int i = 0; i < linearBVHNode.triangles.Length; i++)
+                        {
+                            int triangle = linearBVHNode.triangles[i];
+                            float t = 0;
+                            bool isHit = ray.Raycast(mesh.vertices[mesh.triangles[triangle * 3]],
+                                mesh.vertices[mesh.triangles[triangle * 3 + 1]],
+                                mesh.vertices[mesh.triangles[triangle * 3 + 2]], ref t);
+                            if (isHit && t < mint)
+                            {
+                                mint = t;
+                                hit = true;
+                            }
+                        }
+
+                        if (hit)
+                        {
+                            hitInfo.point = transform.localToWorldMatrix *
+                                            MathUtil.Vector4((ray.origin + ray.direction * mint), 1);
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        hitInfo.transform = linearBVHNode.aabb.transform;
+                        return ray.Raycast(hitInfo.transform, hitInfo);
+                    }
                 }
 
                 if (dirIsNeg[linearBVHNode.axis])
