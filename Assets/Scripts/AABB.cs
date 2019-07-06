@@ -186,6 +186,7 @@ public class AABB : Box
         }
 
         hitInfo.point = ray.origin + ray.direction * t[idx];
+        hitInfo.transform = transform;
         return true;
     }
 

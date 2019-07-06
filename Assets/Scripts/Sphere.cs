@@ -210,6 +210,7 @@ public class Sphere : Box
         }
 
         hitInfo.point = ray.origin + ray.direction * t;
+        hitInfo.transform = transform;
         return true;
     }
 

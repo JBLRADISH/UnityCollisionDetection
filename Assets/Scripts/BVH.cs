@@ -462,8 +462,6 @@ public class BVH : Box
             ray.Transform(transform.worldToLocalMatrix);
         }
 
-        Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
-
         bool[] dirIsNeg = new bool[3] {ray.direction.x < 0, ray.direction.y < 0, ray.direction.z < 0};
         Stack<int> s = new Stack<int>();
         s.Push(0);
@@ -477,6 +475,7 @@ public class BVH : Box
                 {
                     if (transform != null)
                     {
+                        Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
                         bool hit = false;
                         float mint = float.MaxValue;
                         for (int i = 0; i < linearBVHNode.triangles.Length; i++)
@@ -497,13 +496,14 @@ public class BVH : Box
                         {
                             hitInfo.point = transform.localToWorldMatrix *
                                             MathUtil.Vector4((ray.origin + ray.direction * mint), 1);
+                            hitInfo.transform = transform;
                             return true;
                         }
                     }
                     else
                     {
-                        hitInfo.transform = linearBVHNode.aabb.transform;
-                        return hitInfo.transform.GetComponent<BoxCollider>().box.RayDetection(ray, out hitInfo);
+                        return linearBVHNode.aabb.transform.GetComponent<BoxCollider>().box
+                            .RayDetection(ray, out hitInfo);
                     }
                 }
 

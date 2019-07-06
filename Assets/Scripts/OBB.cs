@@ -27,6 +27,7 @@ public class OBB : Box
 		}
 
 		StructureOBB(mode, matrix);
+		UpdateOBB(mode);
 	}
 
 	public OBB(Vector3[] axis, Vector3 center, Vector3 radius)
@@ -235,6 +236,7 @@ public class OBB : Box
 		if (res)
 		{
 			hitInfo.point = TRMatrix * MathUtil.Vector4(hitInfo.point, 1);
+			hitInfo.transform = transform;
 		}
 
 		return res;
@@ -301,6 +303,18 @@ public class OBB : Box
 	{
 		AABB aabb = AABB.Default;
 		aabb.Union(transformCenter + axis[0] * transformRadius[0] + axis[1] * transformRadius[1] +
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter + axis[0] * transformRadius[0] + axis[1] * transformRadius[1] -
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter + axis[0] * transformRadius[0] - axis[1] * transformRadius[1] +
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter + axis[0] * transformRadius[0] - axis[1] * transformRadius[1] -
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter - axis[0] * transformRadius[0] + axis[1] * transformRadius[1] +
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter - axis[0] * transformRadius[0] + axis[1] * transformRadius[1] -
+		           axis[2] * transformRadius[2]);
+		aabb.Union(transformCenter - axis[0] * transformRadius[0] - axis[1] * transformRadius[1] +
 		           axis[2] * transformRadius[2]);
 		aabb.Union(transformCenter - axis[0] * transformRadius[0] - axis[1] * transformRadius[1] -
 		           axis[2] * transformRadius[2]);
