@@ -15,7 +15,7 @@ public class Ray
         this.distance = distance;
     }
 
-    public bool Raycast(Vector3 p0, Vector3 p1, Vector3 p2, ref float t)
+    public bool Raycast(Vector3 p0, Vector3 p1, Vector3 p2)
     {
         Vector3 e0 = p0 - p1;
         Vector3 e1 = p1 - p2;
@@ -27,7 +27,7 @@ public class Ray
         }
 
         float d = Vector3.Dot(n, p0);
-        t = (d - Vector3.Dot(origin, n)) / dot;
+        float t = (d - Vector3.Dot(origin, n)) / dot;
         if (t < 0 || t > distance)
         {
             return false;
@@ -62,6 +62,7 @@ public class Ray
         }
         else
         {
+            distance = t;
             return true;
         }
     }

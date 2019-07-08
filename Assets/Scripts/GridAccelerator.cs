@@ -5,7 +5,6 @@ using UnityEngine;
 public class GridAccelerator : MonoBehaviour
 {
 
-
 	private Grid grid;
 	private CameraHelper cameraHelper;
 
@@ -19,7 +18,16 @@ public class GridAccelerator : MonoBehaviour
 	// Update is called once per fram
 	void Update()
 	{
-
+		if (Input.GetMouseButtonDown(0))
+		{
+			Ray ray = cameraHelper.ScreenPointToRay();
+			ray.DrawRay();
+			RaycastHit info = new RaycastHit();
+			if (grid.RayDetection(ray, info))
+			{
+				info.transform.GetComponent<Renderer>().material.color = Color.green;
+			}
+		}
 	}
 
 	void OnDrawGizmosSelected()

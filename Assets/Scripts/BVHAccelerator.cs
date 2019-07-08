@@ -24,8 +24,8 @@ public class BVHAccelerator : MonoBehaviour
 		if (Input.GetMouseButtonDown(0))
 		{
 			Ray ray = cameraHelper.ScreenPointToRay();
-			RaycastHit info;
-			if (bvh.RayDetection(ray, out info))
+			RaycastHit info = new RaycastHit();
+			if (bvh.RayDetection(ray, info))
 			{
 				info.transform.GetComponent<Renderer>().material.color = Color.green;
 			}

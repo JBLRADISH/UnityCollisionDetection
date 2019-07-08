@@ -185,10 +185,8 @@ public class Sphere : Box
         Gizmos.DrawWireSphere(center, radius);
     }
 
-    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, RaycastHit hitInfo)
     {
-        hitInfo = new RaycastHit();
-
         Vector3 e = center - ray.origin;
 
         float a = Vector3.Dot(e, ray.direction);
@@ -209,6 +207,7 @@ public class Sphere : Box
             return false;
         }
 
+        ray.distance = t;
         hitInfo.point = ray.origin + ray.direction * t;
         hitInfo.transform = transform;
         return true;

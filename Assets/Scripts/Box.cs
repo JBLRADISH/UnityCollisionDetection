@@ -6,7 +6,7 @@ public abstract class Box
 {
     public Transform transform;
 
-    public abstract bool RayDetection(Ray ray, out RaycastHit hitInfo);
+    public abstract bool RayDetection(Ray ray, RaycastHit hitInfo);
 
     public abstract bool BoxDetection(Box box);
 

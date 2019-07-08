@@ -130,9 +130,8 @@ public class AABB : Box
         Gizmos.DrawLine(transformMax, transformMax - offset2);
     }
 
-    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, RaycastHit hitInfo)
     {
-        hitInfo = new RaycastHit();
         float[] t = new float[3];
         for (int i = 0; i < 3; i++)
         {
@@ -185,9 +184,74 @@ public class AABB : Box
             }
         }
 
+        ray.distance = t[idx];
         hitInfo.point = ray.origin + ray.direction * t[idx];
         hitInfo.transform = transform;
         return true;
+    }
+
+    public bool RayDetection(Ray ray, ref float dist)
+    {
+        float[] t = new float[3];
+        for (int i = 0; i < 3; i++)
+        {
+            if (ray.origin[i] < transformMin[i])
+            {
+                t[i] = (transformMin[i] - ray.origin[i]);
+                if (t[i] > ray.distance * ray.direction[i])
+                {
+                    return false;
+                }
+
+                t[i] /= ray.direction[i];
+            }
+            else if (ray.origin[i] > transformMax[i])
+            {
+                t[i] = (transformMax[i] - ray.origin[i]);
+                if (t[i] < ray.distance * ray.direction[i])
+                {
+                    return false;
+                }
+
+                t[i] /= ray.direction[i];
+            }
+            else
+            {
+                t[i] = -1;
+            }
+        }
+
+        int idx = 0;
+        for (int i = 1; i < 3; i++)
+        {
+            if (t[i] > t[idx])
+            {
+                idx = i;
+            }
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (i == idx)
+            {
+                continue;
+            }
+
+            float tmp = ray.origin[i] + ray.direction[i] * t[idx];
+            if (tmp < transformMin[i] || tmp > transformMax[i])
+            {
+                return false;
+            }
+        }
+
+        dist = t[idx];
+        return true;
+    }
+
+    public bool RayDetection(Ray ray)
+    {
+        float t = 0;
+        return RayDetection(ray, ref t);
     }
 
     public override bool BoxDetection(Box box)
@@ -297,4 +361,5 @@ public class AABB : Box
     {
         return Clone<AABB>();
     }
+
 }

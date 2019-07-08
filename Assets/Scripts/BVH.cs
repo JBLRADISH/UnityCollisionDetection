@@ -454,9 +454,8 @@ public class BVH : Box
         }
     }
 
-    public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
+    public override bool RayDetection(Ray ray, RaycastHit hitInfo)
     {
-        hitInfo = new RaycastHit();
         if (transform != null)
         {
             ray.Transform(transform.worldToLocalMatrix);
@@ -465,45 +464,30 @@ public class BVH : Box
         bool[] dirIsNeg = new bool[3] {ray.direction.x < 0, ray.direction.y < 0, ray.direction.z < 0};
         Stack<int> s = new Stack<int>();
         s.Push(0);
+        bool hit = false;
         while (s.Count > 0)
         {
             int idx = s.Pop();
             LinearBVHNode linearBVHNode = bvhNodes[idx];
-            if (linearBVHNode.aabb.RayDetection(ray, out hitInfo))
+            if (linearBVHNode.aabb.RayDetection(ray))
             {
                 if (!linearBVHNode.left && linearBVHNode.right == -1)
                 {
                     if (transform != null)
                     {
                         Mesh mesh = transform.GetComponent<MeshFilter>().sharedMesh;
-                        bool hit = false;
-                        float mint = float.MaxValue;
                         for (int i = 0; i < linearBVHNode.triangles.Length; i++)
                         {
                             int triangle = linearBVHNode.triangles[i];
-                            float t = 0;
-                            bool isHit = ray.Raycast(mesh.vertices[mesh.triangles[triangle * 3]],
+                            hit |= ray.Raycast(mesh.vertices[mesh.triangles[triangle * 3]],
                                 mesh.vertices[mesh.triangles[triangle * 3 + 1]],
-                                mesh.vertices[mesh.triangles[triangle * 3 + 2]], ref t);
-                            if (isHit && t < mint)
-                            {
-                                mint = t;
-                                hit = true;
-                            }
-                        }
-
-                        if (hit)
-                        {
-                            hitInfo.point = transform.localToWorldMatrix *
-                                            MathUtil.Vector4((ray.origin + ray.direction * mint), 1);
-                            hitInfo.transform = transform;
-                            return true;
+                                mesh.vertices[mesh.triangles[triangle * 3 + 2]]);
                         }
                     }
                     else
                     {
-                        return linearBVHNode.aabb.transform.GetComponent<BoxCollider>().box
-                            .RayDetection(ray, out hitInfo);
+                        hit |= linearBVHNode.aabb.transform.GetComponent<BoxCollider>().box
+                            .RayDetection(ray, hitInfo);
                     }
                 }
 
@@ -534,7 +518,17 @@ public class BVH : Box
             }
         }
 
-        return false;
+        if (transform != null)
+        {
+            ray.Transform(transform.localToWorldMatrix);
+            if (hit)
+            {
+                hitInfo.point = ray.origin + ray.direction * ray.distance;
+                hitInfo.transform = transform;
+            }
+        }
+
+        return hit;
     }
 
     public override bool BoxDetection(Box box)

@@ -222,22 +222,20 @@ public class OBB : Box
 		Gizmos.DrawLine(max, max - offset2);
 	}
 
-	public override bool RayDetection(Ray ray, out RaycastHit hitInfo)
+	public override bool RayDetection(Ray ray, RaycastHit hitInfo)
 	{
 		AABB aabb = GetAABB();
 
-		Matrix4x4 m = RTMatrix;
+		ray.Transform(RTMatrix);
 
-		ray.origin = m * MathUtil.Vector4(ray.origin, 1);
-		ray.direction = m * ray.direction;
-		ray.direction.Normalize();
-
-		bool res = aabb.RayDetection(ray, out hitInfo);
+		bool res = aabb.RayDetection(ray, hitInfo);
 		if (res)
 		{
 			hitInfo.point = TRMatrix * MathUtil.Vector4(hitInfo.point, 1);
 			hitInfo.transform = transform;
 		}
+
+		ray.Transform(TRMatrix);
 
 		return res;
 	}

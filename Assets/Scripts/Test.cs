@@ -14,31 +14,9 @@ public class Test : MonoBehaviour
 	// Update is called once per frame
 	void Update()
 	{
-		if (Input.GetMouseButtonDown(0))
-		{
-			TestRayDetection();
-		}
-		else if (Input.GetKeyDown(KeyCode.A))
+		if (Input.GetKeyDown(KeyCode.A))
 		{
 			TestBoxDetection();
-		}
-	}
-
-	void TestRayDetection()
-	{
-		Ray ray = cameraHelper.ScreenPointToRay();
-		RaycastHit info;
-		BoxCollider[] boxColliders = GameObject.FindObjectsOfType<BoxCollider>();
-		for (int i = 0; i < boxColliders.Length; i++)
-		{
-			if (boxColliders[i].box.RayDetection(ray, out info))
-			{
-				boxColliders[i].transform.GetComponent<Renderer>().material.color = Color.green;
-			}
-			else
-			{
-				boxColliders[i].transform.GetComponent<Renderer>().material.color = Color.white;
-			}
 		}
 	}
 

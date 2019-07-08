@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Voxel
 {
-	List<AABB> aabbs;
+	public List<AABB> aabbs;
 
 	public void Add(AABB aabb)
 	{
@@ -23,21 +23,20 @@ public class Voxel
 public class Grid
 {
 	Voxel[,,] voxels;
-	Vector3 min;
+	AABB aabb;
 	Vector3 unitWidth;
+	Vector3 invUnitWidth;
 
 	public Grid()
 	{
 		BoxCollider[] boxColliders = GameObject.FindObjectsOfType<BoxCollider>();
-		AABB aabb = AABB.Default;
+		aabb = AABB.Default;
 		AABB[] aabbs = new AABB[boxColliders.Length];
 		for (int i = 0; i < boxColliders.Length; i++)
 		{
 			aabbs[i] = boxColliders[i].box.OuterAABB();
 			aabb.Union(aabbs[i]);
 		}
-
-		min = aabb.transformMin;
 
 		//计算单位距离的体素数量
 		Vector3 delta = aabb.transformMax - aabb.transformMin;
@@ -53,7 +52,6 @@ public class Grid
 
 		voxels = new Voxel[nVoxel[0], nVoxel[1], nVoxel[2]];
 
-		float[] invUnitWidth = new float[3];
 		for (int i = 0; i < 3; i++)
 		{
 			unitWidth[i] = delta[i] / voxels.GetLength(i);
@@ -66,8 +64,8 @@ public class Grid
 		{
 			for (int j = 0; j < 3; j++)
 			{
-				voxelMin[j] = Point2Voxel(aabb, aabbs[i].transformMin, j, invUnitWidth);
-				voxelMax[j] = Point2Voxel(aabb, aabbs[i].transformMax, j, invUnitWidth);
+				voxelMin[j] = Point2Voxel(aabbs[i].transformMin, j);
+				voxelMax[j] = Point2Voxel(aabbs[i].transformMax, j);
 			}
 
 			for (int x = voxelMin[0]; x <= voxelMax[0]; x++)
@@ -96,10 +94,15 @@ public class Grid
 		return voxel;
 	}
 
-	int Point2Voxel(AABB aabb, Vector3 point, int axis, float[] invUnitWidth)
+	int Point2Voxel(Vector3 point, int axis)
 	{
 		int voxel = (int) ((point[axis] - aabb.transformMin[axis]) * invUnitWidth[axis]);
 		return Mathf.Clamp(voxel, 0, voxels.GetLength(axis) - 1);
+	}
+
+	float Voxel2Point(int voxel, int axis)
+	{
+		return aabb.transformMin[axis] + unitWidth[axis] * voxel;
 	}
 
 	public void DrawGrid()
@@ -110,7 +113,8 @@ public class Grid
 			{
 				for (int k = 0; k < voxels.GetLength(2); k++)
 				{
-					Vector3 min = this.min + new Vector3(i * unitWidth[0], j * unitWidth[1], k * unitWidth[2]);
+					Vector3 min = this.aabb.transformMin +
+					              new Vector3(i * unitWidth[0], j * unitWidth[1], k * unitWidth[2]);
 					Vector3 max = min + unitWidth;
 					AABB aabb = new AABB(min, max);
 					aabb.DrawAABB();
@@ -118,4 +122,73 @@ public class Grid
 			}
 		}
 	}
+
+	public bool RayDetection(Ray ray, RaycastHit hitInfo)
+	{
+		float t = 0;
+		if (!aabb.RayDetection(ray, ref t))
+		{
+			return false;
+		}
+
+		Vector3 p = ray.origin + ray.direction * t;
+
+		int[] step = new int[3];
+		int[] end = new int[3];
+		int[] vp = new int[3];
+		float[] deltaT = new float[3];
+		float[] nextT = new float[3];
+		for (int i = 0; i < 3; i++)
+		{
+			vp[i] = Point2Voxel(p, i);
+			if (ray.direction[i] >= 0)
+			{
+				step[i] = 1;
+				end[i] = voxels.GetLength(i);
+				deltaT[i] = unitWidth[i] / ray.direction[i];
+				nextT[i] = t + (Voxel2Point(vp[i] + 1, i) - p[i]) / ray.direction[i];
+			}
+			else
+			{
+				step[i] = -1;
+				end[i] = -1;
+				deltaT[i] = -unitWidth[i] / ray.direction[i];
+				nextT[i] = t + (Voxel2Point(vp[i], i) - p[i]) / ray.direction[i];
+			}
+		}
+
+		HashSet<AABB> hs = new HashSet<AABB>();
+		bool hit = false;
+		while (true)
+		{
+			Voxel voxel = voxels[vp[0], vp[1], vp[2]];
+			if (voxel != null && voxel.aabbs != null)
+			{
+				for (int i = 0; i < voxel.aabbs.Count; i++)
+				{
+					AABB tmp = voxel.aabbs[i];
+					if (!hs.Contains(aabb))
+					{
+						hs.Add(tmp);
+						hit |= tmp.transform.GetComponent<BoxCollider>().box
+							.RayDetection(ray, hitInfo);
+					}
+				}
+			}
+
+			int bits = ((nextT[0] < nextT[1] ? 1 : 0) << 2) + ((nextT[0] < nextT[2] ? 1 : 0) << 1) +
+			           nextT[1] < nextT[2] ? 1 : 0;
+			int[] cmpToAxis = {2, 1, 2, 1, 2, 2, 0, 0};
+			int stepAxis = cmpToAxis[bits];
+			if (ray.distance < nextT[stepAxis])
+				break;
+			vp[stepAxis] += step[stepAxis];
+			if (vp[stepAxis] == end[stepAxis])
+				break;
+			nextT[stepAxis] += deltaT[stepAxis];
+		}
+
+		return hit;
+	}
 }
+
