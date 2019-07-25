@@ -6,3 +6,7 @@ AABBCollider.cs SphereCollider.cs OBBCollider.cs MeshCollider.cs 为对应组件
 
 BVH.cs Grid.cs 是场景管理加速结构的内部实现
 BVHAccelerator.cs GridAccelerator.cs 为对应组件脚本
+
+![Grid](https://github.com/JBLRADISH/UnityCollisionDetection/blob/master/Assets/Grid.png)
+![BVH](https://github.com/JBLRADISH/UnityCollisionDetection/blob/master/Assets/BVH.png)
+![MeshCollider](https://github.com/JBLRADISH/UnityCollisionDetection/blob/master/Assets/MeshCollider.png)
