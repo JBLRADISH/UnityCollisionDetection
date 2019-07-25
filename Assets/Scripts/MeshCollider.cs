@@ -18,7 +18,7 @@ public class MeshCollider : BoxCollider
 		box = bvh;
 	}
 
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
 		if (bvh != null)
 		{

@@ -23,7 +23,7 @@ public class AABBCollider : BoxCollider
 		aabb.UpdateAABB(mode);
 	}
 
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
 		if (aabb != null)
 		{

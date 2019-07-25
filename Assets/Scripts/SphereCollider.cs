@@ -22,7 +22,7 @@ public class SphereCollider : BoxCollider
 		sphere.UpdateSphere(mode);
 	}
 	
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
 		if (sphere != null)
 		{

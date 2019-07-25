@@ -21,7 +21,7 @@ public class OBBCollider : BoxCollider
 		obb.UpdateOBB(mode);
 	}
 
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
 		if (obb != null)
 		{

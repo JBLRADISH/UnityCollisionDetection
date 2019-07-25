@@ -30,7 +30,7 @@ public class GridAccelerator : MonoBehaviour
 		}
 	}
 
-	void OnDrawGizmosSelected()
+	void OnDrawGizmos()
 	{
 		if (grid != null)
 		{
